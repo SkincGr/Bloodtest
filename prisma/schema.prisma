@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Person {
+  id    Int         @id
+  name  String
+  mrn   String?     @unique
+  tests BloodTest[]
+}
+
+model Group {
+  id    Int         @id
+  name  String
+  items BloodItem[]
+}
+
+model BloodItem {
+  id         Int         @id
+  groupId    Int?
+  group      Group?      @relation(fields: [groupId], references: [id])
+  name       String      @unique
+  valueRange String?
+  condition  String?
+  min        Float?
+  max        Float?
+  tests      BloodTest[]
+}
+
+model BloodTest {
+  id       Int       @id @default(autoincrement())
+  personId Int
+  person   Person    @relation(fields: [personId], references: [id])
+  itemId   Int
+  item     BloodItem @relation(fields: [itemId], references: [id])
+  date     DateTime  @db.Date
+  value    Float
+
+  @@unique([personId, itemId, date])
+  @@index([personId, date])
+}
