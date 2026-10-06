@@ -6,7 +6,7 @@ import type { Box } from "@/lib/parser";
 export type Mark = {
   id: string;
   boxes: Box[];
-  kind: "ok" | "off" | "unmatched"; // matched+selected, matched but unchecked, not matched
+  kind: "ok" | "off" | "unmatched" | "missing"; // matched+selected, matched but unchecked, not matched, value drawn as a shape
   title: string;
 };
 

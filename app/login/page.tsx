@@ -17,12 +17,14 @@ export default function Login() {
   }
 
   return (
-    <form className="card login" onSubmit={submit}>
-      <h1>Σύνδεση</h1>
-      <input type="password" placeholder="Κωδικός" value={password} autoFocus
-        onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit">Είσοδος</button>
-      {error && <p className="bad">{error}</p>}
-    </form>
+    <div className="loginpage">
+      <form className="card login" onSubmit={submit}>
+        <h1>Σύνδεση</h1>
+        <input type="password" placeholder="Κωδικός" value={password} autoFocus
+          onChange={(e) => setPassword(e.target.value)} />
+        <button type="submit">Είσοδος</button>
+        {error && <p className="bad">{error}</p>}
+      </form>
+    </div>
   );
 }

@@ -45,6 +45,12 @@ export function rowCodes(label: string): string[] {
       if (k) keys.add(k);
     }
   }
+  // Some labs print the code first instead of in parentheses: "RBC Ερυθρά αιμοσφαίρια", "SGOT", "Τ4 - Θυροξίνη".
+  // Only when the code stands for the whole row: "LDH 1 (Heart)" / "LDH 2" are isoenzymes, not the total "LDH".
+  const words = label.trim().split(/[\s:]+/);
+  const first = words[0] ?? "";
+  const standsAlone = !label.includes("(") && !/^\d+$/.test(words[1] ?? "");
+  if (standsAlone && first.length >= 2 && isCode(first) && /^[A-ZΑ-Ω0-9%#\-+]+$/.test(first)) keys.add(codeKey(first));
   return [...keys];
 }
 

@@ -47,9 +47,18 @@ export default function LineChart({
   const bandBottom = y(Math.max(low ?? lo, lo));
 
   const yTicks = [0, 1, 2, 3, 4].map((k) => lo + (span * k) / 4);
-  const step = Math.max(1, Math.ceil(points.length / 6));
-  const xLabels = points.map((p, i) => ({ p, i })).filter(({ i }) => i % step === 0 || i === points.length - 1);
-  const showValues = points.length <= 14;
+  // Label as many dates as fit: skip a label when it would overlap the previous one (x is by real time).
+  const MIN_GAP = 30;
+  const xLabels: { p: ChartPoint; i: number }[] = [];
+  points.forEach((p, i) => {
+    if (!xLabels.length || x(i) - x(xLabels[xLabels.length - 1].i) >= MIN_GAP) xLabels.push({ p, i });
+  });
+  const lastIdx = points.length - 1;
+  if (xLabels[xLabels.length - 1].i !== lastIdx) {
+    while (xLabels.length > 1 && x(lastIdx) - x(xLabels[xLabels.length - 1].i) < MIN_GAP) xLabels.pop();
+    xLabels.push({ p: points[lastIdx], i: lastIdx });
+  }
+  const showValues = points.length <= 20;
 
   return (
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img">
@@ -63,7 +72,7 @@ export default function LineChart({
         </g>
       ))}
       {xLabels.map(({ p, i }) => (
-        <text key={p.date} className="tick" x={x(i)} y={H - 12} textAnchor="middle">{fmtAxis(p.date)}</text>
+        <text key={p.date} className="tick x" x={x(i)} y={H - 12} textAnchor="middle">{fmtAxis(p.date)}</text>
       ))}
       <path className="line" d={path} />
       {points.map((p, i) => (

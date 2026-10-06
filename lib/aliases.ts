@@ -25,9 +25,26 @@ export const ALIASES: Alias[] = [
   { item: 2, match: ["(EOS)"], index: 0 }, // EO%
   { item: 1, match: ["(BASO)"], index: 0 }, // BA%
   { item: 37, match: ["(PLT)"] }, // PLT Αιμοπετάλια
-  { item: 12, match: ["(MPV)"] }, // MPV
+  { item: 12, match: ["MPV"] }, // MPV (και το 60 έχει τον ίδιο κωδικό, γι' αυτό ρητή αντιστοίχιση)
   { item: 54, match: ["(PDW)"] }, // PDW
   { item: 29, match: ["ΤαχύτηταΚαθίζησηςΕρυθρών"] }, // ΤΚΕ
+
+  // Εργαστήριο MEDILAB (κωδικός στην αρχή της γραμμής, τιμή και μονάδα μαζί)
+  { item: 20, match: ["NEUT%"] }, // NE%
+  { item: 4, match: ["NEUT#"] }, // NE#
+  { item: 17, match: ["LYM%"] }, // LY%
+  { item: 32, match: ["LYM#"] }, // LY#
+  { item: 5, match: ["MM%"] }, // MO%
+  { item: 30, match: ["MM#"] }, // MO#
+  { item: 2, match: ["EO%"] }, // EO%
+  { item: 1, match: ["BAS%"] }, // BA%
+  { item: 15, match: ["RDW"] }, // RDW-CV
+  { item: 50, match: ["Σάκχαρο"] }, // Σάκχαρο - Glu
+  { item: 38, match: ["Χοληστερίνη"], not: ["HDL", "LDL"] }, // Cholesterol
+  { item: 58, match: ["Τριγλυκερίδια"] },
+  { item: 59, match: ["Βιταμίνη", "25-OH"] }, // 25-OH D3
+
+  { item: 23, match: ["Χολερυθρίνη", "Αμεση"] }, // ΧΟΛΕΡΥΘΡΙΝΗ ΑΜΕΣΟΣ
 
   // Βιοχημικό
   { item: 26, match: ["CRP"] }, // CRP

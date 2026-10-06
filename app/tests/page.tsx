@@ -7,6 +7,9 @@ export const dynamic = "force-dynamic";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const greek = (s: string) => s.split("-").reverse().join("/");
+const MONTHS = ["Ιανουαρίου", "Φεβρουαρίου", "Μαρτίου", "Απριλίου", "Μαΐου", "Ιουνίου", "Ιουλίου", "Αυγούστου", "Σεπτεμβρίου", "Οκτωβρίου", "Νοεμβρίου", "Δεκεμβρίου"];
+// "2026-06-25" -> "25 Ιουνίου" (the year is the heading above)
+const dayMonth = (s: string) => `${Number(s.slice(8, 10))} ${MONTHS[Number(s.slice(5, 7)) - 1]}`;
 
 export default async function Tests({
   searchParams,
@@ -47,7 +50,7 @@ export default async function Tests({
 
   return (
     <>
-      <h1>Αποτελέσματα</h1>
+      <h1>Αρχείο</h1>
       <form className="row">
         <select name="person" defaultValue={personId}>
           {persons.map((p) => (
@@ -62,15 +65,19 @@ export default async function Tests({
       ) : (
         <div className="split">
           <aside className="card dates">
-            {dates.map((d) => (
+            {dates.map((d, i) => [
+              // year heading when the year changes (dates are newest first)
+              (i === 0 || d.date.slice(0, 4) !== dates[i - 1].date.slice(0, 4)) && (
+                <div className="yr" key={`y${d.date.slice(0, 4)}`}>{d.date.slice(0, 4)}</div>
+              ),
               <Link
                 key={d.date}
                 href={`/tests?person=${personId}&date=${d.date}`}
                 className={d.date === selected ? "active" : ""}
               >
-                {greek(d.date)} <span className="muted">({d.count})</span>
-              </Link>
-            ))}
+                {dayMonth(d.date)} <span className="muted">({d.count})</span>
+              </Link>,
+            ])}
           </aside>
 
           <section className="card tablewrap">

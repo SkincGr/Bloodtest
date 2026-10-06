@@ -23,7 +23,11 @@ export type Box = { page: number; x: number; y: number; w: number; h: number };
 export type ParsedValue = { itemId: number; name: string; value: number; boxes?: Box[] };
 export type PdfPage = { width: number; items: { s: string; x: number; y: number; w?: number; h?: number }[] };
 export type Unmatched = { label: string; value: number; range?: string; boxes?: Box[] };
+// A row for a known exam that has reference limits but no value in the text layer: the lab drew the value as a
+// vector shape (out-of-range values are printed in bold this way). `region` is where the value sits, for OCR.
+export type Missing = { itemId: number; name: string; range?: string; region: Box; boxes: Box[] };
 export type ParsedPdf = {
+  missing: Missing[];
   unmatched: Unmatched[]; // result rows no alias/item recognised
   mrn: string | null;
   date: string | null; // YYYY-MM-DD
@@ -48,8 +52,11 @@ export function findMrn(text: string): string | null {
 export function findDate(text: string): string | null {
   for (const line of text.split("\n")) {
     if (norm(line).includes("γεννησ")) continue;
-    const m = line.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+    const m = line.match(/(?<![\d/])(\d{1,2})\/(\d{1,2})\/(\d{4})(?!\d)/); // also "17/9/2026"
+    if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    // this lab prints dd/mm/yy ("25/06/26")
+    const m2 = line.match(/(?<![\d/])(\d{2})\/(\d{2})\/(\d{2})(?![\d/])/);
+    if (m2) return `20${m2[3]}-${m2[2]}-${m2[1]}`;
   }
   return null;
 }
@@ -89,6 +96,8 @@ export function parseText(rawText: string, items: ItemRef[]): ParsedPdf {
     const m = after.match(/(\d+\.\d+|\d+(?:,\d+)?)/);
     const value = m ? parseFloat(m[1].replace(",", ".")) : NaN;
     if (!m || !isFinite(value) || value > 3000) continue; // >3000 is likely a year/phone
+    // A number that starts a range ("4.5-5.5") or follows < / > is a reference limit, not a result.
+    if (/^-\d/.test(after.slice(m.index! + m[0].length)) || /[<>]$/.test(after.slice(0, m.index!))) continue;
     done.add(h.item.id);
     values.push({ itemId: h.item.id, name: h.item.name, value });
   }
@@ -96,7 +105,7 @@ export function parseText(rawText: string, items: ItemRef[]): ParsedPdf {
     if (!done.has(item.id) && real.some((h) => h.item.id === item.id))
       notFound.push(item.name);
 
-  return { mrn: findMrn(text), date: findDate(text), values, notFound, unmatched: [] };
+  return { mrn: findMrn(text), date: findDate(text), values, notFound, unmatched: [], missing: [] };
 }
 
 // --- Row-based parsing (uses text positions, so labels stay paired with their values) ---
@@ -107,7 +116,9 @@ const LOOKALIKE: Record<string, string> = {
 };
 export const skel = (s: string) => norm(s).replace(/[α-ω]/g, (c) => LOOKALIKE[c] ?? c);
 
-const NUM = /^\d+(?:[.,]\d+)?$/;
+// A result cell: a number, optionally followed by its unit in the same cell ("95 mg/dl", "32.0%").
+// Ranges such as "4.5 - 5.5" don't match.
+const NUM = /^\d+(?:[.,]\d+)?(?:\s*[%A-Za-zΑ-Ωα-ωμ/].*)?$/;
 
 // The font encodes spaces and hyphens as control chars (\u0003, \u0010); make them readable again.
 const tidy = (s: string) =>
@@ -143,11 +154,12 @@ function boxOf(page: number, cells: Cell[]): Box | null {
   return { page, x: x0 - 2, y: y - 0.25 * h - 1, w: x1 - x0 + 4, h: h * 1.2 + 2 };
 }
 
-export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, "values" | "unmatched"> {
+export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, "values" | "unmatched" | "missing"> {
   const known = new Set(items.map((i) => i.id));
   const nameOf = new Map(items.map((i) => [i.id, i.name]));
   const values: ParsedValue[] = [];
   const unmatched: Unmatched[] = [];
+  const missing: Missing[] = [];
   const done = new Set<number>();
 
   // code key -> item ids ("RBC" -> [11]); a code shared by several items is ambiguous and ignored.
@@ -166,7 +178,8 @@ export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, 
     return ids.size === 1 ? [{ item: [...ids][0], match: [] }] : [];
   };
 
-  type Pending = { hit: Alias[]; label: string; box: Box | null; y: number };
+  // `miss`: set when the row already shows reference limits, so a value should be there.
+  type Pending = { hit: Alias[]; label: string; box: Box | null; y: number; miss?: { region: Box; range?: string } };
   type Held = { pend: Pending; v: Cell[]; row: Row };
 
   for (const [pageIdx, page] of pages.entries()) {
@@ -189,7 +202,7 @@ export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, 
       // Skip page footers / addresses ("1 / 1", e-mail, phone numbers).
       if (!next || next.s === "/" || next.s.includes("@") || !/[Α-Ωα-ωA-Za-z]{3}/.test(label) || /Τηλ|Κιν/.test(label)) return;
       unmatched.push({
-        label: label.replace(/[.:]{2,}.*$/, "").trim(),
+        label: label.replace(/(?:[\s.:]*[.:]){2,}.*$/, "").trim(), // drop the "........:" filler
         value: parseFloat(v[0].s.replace(",", ".")),
         range: row.slice(at + 1).find((c) => RANGE.test(c.s))?.s.replace(/\s+/g, ""),
         boxes: [...extra, boxOf(pageIdx, [v[0]])].filter((b): b is Box => !!b),
@@ -199,12 +212,27 @@ export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, 
       if (held) addUnmatched(held.pend.label, held.v, held.row, [held.pend.box]);
       held = null;
     };
+    // A label row nobody gave a value to: if it has limits and is a known exam, the value is drawn as a shape.
+    const dropPending = () => {
+      const p = pending;
+      pending = null;
+      if (!p?.miss || p.hit.length !== 1) return;
+      const item = p.hit[0].item;
+      missing.push({
+        itemId: item,
+        name: nameOf.get(item)!,
+        range: p.miss.range,
+        region: p.miss.region,
+        boxes: [p.box, p.miss.region].filter((b): b is Box => !!b),
+      });
+    };
 
     for (const cells of groupRows(page.items)) {
       const v = cells.filter((c) => c.x >= valueX && NUM.test(c.s));
       const y = cells[0].y;
       // A row that starts in the value column is the value line of the label row just above it.
       const valueOnly = !!pending && v.length > 0 && cells[0] === v[0] && pending.y - y < 45;
+      if (pending && !valueOnly) dropPending();
       if (cells[0].x > page.width * 0.25 && !valueOnly) continue; // not a result row
 
       const labelCells = cells.filter((c) => !v.length || c.x < v[0].x);
@@ -223,6 +251,16 @@ export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, 
           flushHeld();
         }
         pending = label ? { hit: resolve(label), label, box: boxOf(pageIdx, labelCells), y } : null;
+        // Where the value would be: after the label text, before the first unit / limits cell.
+        const rangeCell = cells.find((c) => RANGE.test(c.s));
+        const tail = cells.find((c) => c.x >= valueX);
+        if (pending && rangeCell && tail) {
+          const left = Math.max(...cells.filter((c) => c.x < valueX).map((c) => c.x + c.w)) + 2;
+          // Text row baseline = y. The bold value (a ~5pt-high shape) sits from ~1pt below to ~4.2pt above it;
+          // stay inside that band so letters of the rows above/below (8.7pt apart) are not included.
+          const region: Box = { page: pageIdx, x: left, y: y - 1.2, w: tail.x - 0.3 - left, h: 5.8 };
+          if (region.w > 4) pending.miss = { region, range: rangeCell.s.replace(/\s+/g, "") };
+        }
         continue;
       }
 
@@ -240,8 +278,13 @@ export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, 
       else addUnmatched(label, v, cells, [boxOf(pageIdx, labelCells)]);
     }
     flushHeld();
+    if (pending) dropPending();
   }
-  return { values: values.filter((x) => isFinite(x.value) && x.value <= 3000), unmatched };
+  return {
+    values: values.filter((x) => isFinite(x.value) && x.value <= 3000),
+    unmatched,
+    missing: missing.filter((m) => !done.has(m.itemId)),
+  };
 }
 
 // Row-based result first; name matching over the plain text fills anything the rows missed.
@@ -250,5 +293,12 @@ export function parsePdf(rawText: string, pages: PdfPage[], items: ItemRef[]): P
   const byRows = parsePages(pages, items);
   const have = new Set(byRows.values.map((v) => v.itemId));
   const values = [...byRows.values, ...byText.values.filter((v) => !have.has(v.itemId))];
-  return { ...byText, values, unmatched: byRows.unmatched, notFound: byText.notFound.filter((n) => !values.some((v) => v.name === n)) };
+  const got = new Set(values.map((v) => v.itemId));
+  return {
+    ...byText,
+    values,
+    unmatched: byRows.unmatched,
+    missing: byRows.missing.filter((m) => !got.has(m.itemId)),
+    notFound: byText.notFound.filter((n) => !values.some((v) => v.name === n)),
+  };
 }

@@ -1,6 +1,7 @@
 // Min/Max semantics come from the Access "Codition" column:
 // Between = min..max, "<" = must be below max, ">" = must be above min; other kinds have no check.
-export type RangeResult = { out: boolean; pct: number | null };
+// pct = signed deviation in % of the violated limit; dist = absolute distance beyond that limit.
+export type RangeResult = { out: boolean; pct: number | null; dist: number };
 
 export function evaluate(
   v: number,
@@ -15,10 +16,10 @@ export function evaluate(
   } else if (cond === "<" && max != null && v >= max) limit = max;
   else if (cond === ">" && min != null && v <= min) limit = min;
 
-  if (limit == null) return { out: false, pct: null };
+  if (limit == null) return { out: false, pct: null, dist: 0 };
   // Signed deviation from the violated limit, in % of that limit (null when the limit is 0).
   const pct = limit === 0 ? null : ((v - limit) / Math.abs(limit)) * 100;
-  return { out: true, pct };
+  return { out: true, pct, dist: Math.abs(v - limit) };
 }
 
 export function formatPct(pct: number | null): string {
