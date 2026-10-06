@@ -4,7 +4,7 @@
 body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
 nav { display:flex; gap:16px; padding:12px 20px; background:var(--card); border-bottom:1px solid var(--line); align-items:center; }
 nav a { color:var(--text); text-decoration:none; font-weight:500; } nav a:hover { color:var(--accent); }
-main { max-width:1100px; margin:0 auto; padding:20px; }
+main { max-width:1400px; margin:0 auto; padding:20px; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
 h1 { font-size:20px; margin:0 0 14px; } h2 { font-size:16px; margin:0 0 10px; }
 button, select, input { font:inherit; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
@@ -16,5 +16,26 @@ table { border-collapse:collapse; width:100%; } th, td { padding:5px 10px; borde
 td.num, th.num { text-align:right; } td.out { background:var(--badbg); color:var(--bad); font-weight:600; }
 td input[type=number] { width:90px; }
 tr.group td { background:var(--bg); font-weight:600; color:var(--muted); }
+.split { display:grid; grid-template-columns:200px 1fr; gap:16px; align-items:start; }
+.dates { display:flex; flex-direction:column; padding:8px; position:sticky; top:12px; max-height:80vh; overflow-y:auto; margin:0; }
+.dates a { padding:6px 10px; border-radius:6px; color:var(--text); text-decoration:none; }
+.dates a:hover { background:var(--bg); } .dates a.active { background:var(--accent); color:#fff; } .dates a.active .muted { color:#fff; opacity:.8; }
+.split section.card { margin:0; }
+@media (max-width:700px) { .split { grid-template-columns:1fr; } .dates { position:static; max-height:220px; } }
+.split2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+.split2 > .card { margin:0; }
+.pdfpane { padding:0; overflow:hidden; position:sticky; top:12px; }
+.pdfpane iframe { width:100%; height:calc(100vh - 100px); min-height:500px; border:0; display:block; }
+.confirm { margin-top:12px; padding:12px; border:1px solid var(--accent); border-radius:8px; }
+.confirm p { margin:0 0 10px; }
+@media (max-width:900px) { .split2 { grid-template-columns:1fr; } .pdfpane { position:static; } .pdfpane iframe { height:60vh; } }
+.chart { width:100%; height:auto; display:block; }
+.chart .band { fill:var(--ok); opacity:.12; }
+.chart .grid { stroke:var(--line); stroke-width:1; }
+.chart .tick { fill:var(--muted); font-size:11px; }
+.chart .line { fill:none; stroke:var(--accent); stroke-width:2; }
+.chart .pt { fill:var(--accent); } .chart .pt.out { fill:var(--bad); }
+.chart .val { fill:var(--text); font-size:11px; } .chart .val.out { fill:var(--bad); font-weight:600; }
+a { color:var(--accent); }
 .login { max-width:320px; margin:12vh auto; }
 .login input { width:100%; margin-bottom:10px; }

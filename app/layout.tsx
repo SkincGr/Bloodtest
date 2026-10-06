@@ -10,8 +10,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <nav>
           <strong>Εξετάσεις Αίματος</strong>
+          <Link href="/tests">Αποτελέσματα</Link>
           <Link href="/">Εισαγωγή PDF</Link>
-          <Link href="/history">Ιστορικό</Link>
+          <Link href="/history">Πίνακας</Link>
         </nav>
         <main>{children}</main>
       </body>

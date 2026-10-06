@@ -1,14 +1,7 @@
 import { prisma } from "@/lib/db";
+import { evaluate } from "@/lib/range";
 
 export const dynamic = "force-dynamic";
-
-// Min/Max semantics come from the Access "Codition" column.
-function outOfRange(v: number, min: number | null, max: number | null, cond: string | null) {
-  if (cond === "Between" && min != null && max != null) return v < min || v > max;
-  if (cond === "<" && max != null) return v >= max;
-  if (cond === ">" && min != null) return v <= min;
-  return false;
-}
 
 const day = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -36,7 +29,7 @@ export default async function History({
   let lastGroup: string | undefined;
   return (
     <>
-      <h1>Ιστορικό</h1>
+      <h1>Πίνακας εξετάσεων</h1>
       <form className="row">
         <select name="person" defaultValue={personId}>
           {persons.map((p) => (
@@ -73,7 +66,7 @@ export default async function History({
                     <td className="muted">{it.valueRange}</td>
                     {dates.map((d) => {
                       const v = cell.get(`${it.id}|${d}`);
-                      const bad = v != null && outOfRange(v, it.min, it.max, it.condition);
+                      const bad = v != null && evaluate(v, it.min, it.max, it.condition).out;
                       return <td key={d} className={"num" + (bad ? " out" : "")}>{v ?? ""}</td>;
                     })}
                   </tr>,

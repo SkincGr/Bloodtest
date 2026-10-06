@@ -20,12 +20,17 @@ async function main() {
     });
   const groupIds = new Set<number>(groups.map((g: any) => g.Group_ID));
 
-  for (const p of persons)
+  // The old import script wrote the PDF's MRN (66520) into Person_ID; that patient is Chris (id 1).
+  const MRN_TO_PERSON: Record<number, number> = { 66520: 1 };
+
+  for (const p of persons) {
+    const mrn = Object.entries(MRN_TO_PERSON).find(([, id]) => id === p.Person_Id)?.[0] ?? null;
     await prisma.person.upsert({
       where: { id: p.Person_Id },
-      update: { name: p.Person_Name },
-      create: { id: p.Person_Id, name: p.Person_Name },
+      update: { name: p.Person_Name, mrn },
+      create: { id: p.Person_Id, name: p.Person_Name, mrn },
     });
+  }
 
   for (const i of items) {
     const data = {
@@ -55,7 +60,7 @@ async function main() {
       continue;
     }
     rows.push({
-      personId: t.Person_ID,
+      personId: MRN_TO_PERSON[t.Person_ID] ?? t.Person_ID,
       itemId,
       date: new Date(t.Date.slice(0, 10)),
       value: t.Value,
