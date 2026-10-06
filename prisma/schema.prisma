@@ -25,6 +25,7 @@ model BloodItem {
   groupId    Int?
   group      Group?      @relation(fields: [groupId], references: [id])
   name       String      @unique
+  code       String? // Latin abbreviation(s) from the name, e.g. "PSA" or "SGOT, AST"; used to match PDF rows
   valueRange String?
   condition  String?
   min        Float?

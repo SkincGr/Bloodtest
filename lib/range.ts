@@ -26,3 +26,19 @@ export function formatPct(pct: number | null): string {
   const r = Math.abs(pct) < 10 ? pct.toFixed(1) : Math.round(pct).toString();
   return `${pct > 0 ? "+" : ""}${r}%`;
 }
+
+// Turns a printed reference range into the BloodItem Min/Max/Codition fields.
+// "0.12-0.35" -> Between 0.12..0.35, "<0.5" -> "<" 0.5, ">3" -> ">" 3.
+export function parseRange(
+  s: string | null | undefined,
+): { condition: string; min: number | null; max: number | null } | null {
+  const t = (s ?? "").replace(/\s+/g, "").replace(/,/g, ".");
+  const n = (x: string) => parseFloat(x);
+  let m = t.match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/);
+  if (m) return { condition: "Between", min: n(m[1]), max: n(m[2]) };
+  m = t.match(/^<=?(\d+(?:\.\d+)?)$/);
+  if (m) return { condition: "<", min: null, max: n(m[1]) };
+  m = t.match(/^>=?(\d+(?:\.\d+)?)$/);
+  if (m) return { condition: ">", min: n(m[1]), max: null };
+  return null;
+}

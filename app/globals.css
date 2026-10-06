@@ -24,11 +24,29 @@ tr.group td { background:var(--bg); font-weight:600; color:var(--muted); }
 @media (max-width:700px) { .split { grid-template-columns:1fr; } .dates { position:static; max-height:220px; } }
 .split2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
 .split2 > .card { margin:0; }
-.pdfpane { padding:0; overflow:hidden; position:sticky; top:12px; }
-.pdfpane iframe { width:100%; height:calc(100vh - 100px); min-height:500px; border:0; display:block; }
+.pdfpane { padding:0; overflow:auto; position:sticky; top:12px; height:calc(100vh - 110px); min-height:500px; }
+.pdfpages { background:#8a8f98; display:flex; flex-direction:column; gap:8px; padding:8px; }
+.pdfpage { position:relative; width:100%; background:#fff; }
+.pdfpage img { width:100%; height:100%; display:block; }
+.mk { position:absolute; border-radius:2px; cursor:pointer; mix-blend-mode:multiply; }
+.mk.ok { background:rgba(34,197,94,.38); outline:1px solid rgba(22,163,74,.9); }
+.mk.off { background:rgba(148,163,184,.35); outline:1px dashed rgba(100,116,139,.9); }
+.mk.unmatched { background:rgba(245,158,11,.38); outline:1px solid rgba(217,119,6,.9); }
+.mk.focus { outline:3px solid #1f6feb; animation:pulse 1s ease-in-out 3; }
+@keyframes pulse { 50% { background-color:rgba(31,111,235,.45); } }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; margin-bottom:8px; }
+.legend i { display:inline-block; width:12px; height:12px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+.unmatched { margin-top:14px; padding-top:10px; border-top:1px solid var(--line); }
+.umrow { padding:6px 8px; border-radius:6px; } .umrow.sel { background:rgba(245,158,11,.14); }
+.addform { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px; border:1px solid var(--line); border-radius:8px; margin-bottom:8px; }
+.addform label { display:flex; flex-direction:column; font-size:13px; color:var(--muted); gap:3px; }
+.addform label input, .addform label select { color:var(--text); }
+.addform .row { grid-column:1 / -1; margin:0; }
+tr.sel td { background:rgba(31,111,235,.12); }
+tbody tr[data-row] { cursor:pointer; }
 .confirm { margin-top:12px; padding:12px; border:1px solid var(--accent); border-radius:8px; }
 .confirm p { margin:0 0 10px; }
-@media (max-width:900px) { .split2 { grid-template-columns:1fr; } .pdfpane { position:static; } .pdfpane iframe { height:60vh; } }
+@media (max-width:900px) { .split2 { grid-template-columns:1fr; } .pdfpane { position:static; height:60vh; min-height:0; } }
 .chart { width:100%; height:auto; display:block; }
 .chart .band { fill:var(--ok); opacity:.12; }
 .chart .grid { stroke:var(--line); stroke-width:1; }
