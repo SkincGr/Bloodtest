@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import MainNav from "@/components/MainNav";
 import "./globals.css";
 
 export const metadata: Metadata = { title: "Εξετάσεις Αίματος" };
@@ -8,15 +8,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="el">
       <body>
-        <nav>
-          <strong>Εξετάσεις Αίματος</strong>
-          <Link href="/tests">Αρχείο</Link>
-          <Link href="/history">Πίνακας</Link>
-          <Link href="/outliers">Εκτός ορίων</Link>
-          <Link href="/frequency">Συχνότητα</Link>
-          <Link href="/">Εισαγωγή PDF</Link>
-        </nav>
-        <main>{children}</main>
+        <MainNav />
+        {children}
       </body>
     </html>
   );

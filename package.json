@@ -9,7 +9,9 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:codes": "tsx prisma/fill-codes.ts"
+    "db:codes": "tsx prisma/fill-codes.ts",
+    "db:subgroups": "tsx prisma/fill-subgroups.ts",
+    "db:weights": "tsx prisma/import-weights.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",

@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-type Item = Awaited<ReturnType<typeof prisma.bloodItem.findMany<{ include: { group: true } }>>>[number];
+type Item = Awaited<ReturnType<typeof prisma.bloodItem.findMany<{ include: { group: true; subgroup: true } }>>>[number];
 type Test = { itemId: number; date: Date; value: number };
 
 function ChartCard({ it, tests }: { it: Item; tests: Test[] }) {
@@ -50,7 +50,7 @@ export default async function Trends({
 
   const person = personId ? await prisma.person.findUnique({ where: { id: personId } }) : null;
   const allItems = person
-    ? await prisma.bloodItem.findMany({ include: { group: true }, orderBy: [{ groupId: "asc" }, { id: "asc" }] })
+    ? await prisma.bloodItem.findMany({ include: { group: true, subgroup: true }, orderBy: [{ groupId: "asc" }, { subgroupId: "asc" }, { id: "asc" }] })
     : [];
   const items = allItems.filter((i) => itemIds.includes(i.id));
   const groups = withRelated ? relatedTo(itemIds[0], allItems) : [];

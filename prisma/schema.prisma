@@ -11,19 +11,31 @@ model Person {
   id    Int         @id
   name  String
   mrn   String?     @unique
+  height Int? // cm; links the person to their rows in Weight
   tests BloodTest[]
 }
 
 model Group {
-  id    Int         @id
-  name  String
-  items BloodItem[]
+  id        Int         @id
+  name      String
+  items     BloodItem[]
+  subgroups Subgroup[]
+}
+
+model Subgroup {
+  id      Int         @id
+  groupId Int
+  group   Group       @relation(fields: [groupId], references: [id])
+  name    String
+  items   BloodItem[]
 }
 
 model BloodItem {
   id         Int         @id
   groupId    Int?
   group      Group?      @relation(fields: [groupId], references: [id])
+  subgroupId Int?
+  subgroup   Subgroup?   @relation(fields: [subgroupId], references: [id])
   name       String      @unique
   code       String? // Latin abbreviation(s) from the name, e.g. "PSA" or "SGOT, AST"; used to match PDF rows
   valueRange String?
@@ -44,4 +56,14 @@ model BloodTest {
 
   @@unique([personId, itemId, date])
   @@index([personId, date])
+}
+
+// Imported from MyWeight.accdb (table Weights). `id` is the Access ID.
+model Weight {
+  id     Int      @id
+  date   DateTime @db.Date
+  weight Float
+  height Int? // cm; tells whose weight it is (the Access table has no person column)
+
+  @@index([date])
 }

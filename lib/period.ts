@@ -1,6 +1,7 @@
 // Shared by the pages that filter results by a period (trends, out-of-range).
 export const PERIODS: Record<string, string> = {
   all: "Όλες οι μετρήσεις",
+  "1m": "Τελευταίος μήνας",
   "3m": "Τελευταίοι 3 μήνες",
   "6m": "Τελευταίοι 6 μήνες",
   "1y": "Τελευταίο έτος",

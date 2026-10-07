@@ -17,8 +17,8 @@ export default async function History({
   const itemIds = new Set(tests.map((t) => t.itemId));
   const items = (
     await prisma.bloodItem.findMany({
-      include: { group: true },
-      orderBy: [{ groupId: "asc" }, { id: "asc" }],
+      include: { group: true, subgroup: true },
+      orderBy: [{ groupId: "asc" }, { subgroupId: "asc" }, { id: "asc" }],
     })
   ).filter((i) => itemIds.has(i.id));
 

@@ -12,7 +12,7 @@ export type GridItem = {
   condition: string | null;
 };
 export type GridTest = { itemId: number; date: Date; value: number };
-export type GridSection = { title: string; items: GridItem[] };
+export type GridSection = { title: string; sub?: string; items: GridItem[] };
 
 const day = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -41,12 +41,17 @@ export default function ValuesGrid({ sections, tests }: { sections: GridSection[
           </tr>
         </thead>
         <tbody>
-          {sections.map((s) => [
-            s.title && (
+          {sections.map((s, n) => [
+            s.title && s.title !== sections[n - 1]?.title && (
               <tr className="group" key={`g-${s.title}`}>
                 <td colSpan={dates.length + 1}>
                   <span className="gname">{s.title}</span>
                 </td>
+              </tr>
+            ),
+            s.sub && (
+              <tr className="subgroup" key={`s-${s.title}-${s.sub}`}>
+                <td colSpan={dates.length + 1}>{s.sub}</td>
               </tr>
             ),
             ...s.items.map((it) => (
@@ -77,14 +82,17 @@ export default function ValuesGrid({ sections, tests }: { sections: GridSection[
   );
 }
 
-// Groups items into sections by their BloodItem group (items must already be ordered by group).
-export function sectionsByGroup<T extends GridItem & { group: { name: string } | null }>(items: T[]): GridSection[] {
+// Groups items into sections by their BloodItem group and subgroup (items must already be ordered by group, subgroup).
+export function sectionsByGroup<
+  T extends GridItem & { group: { name: string } | null; subgroup?: { name: string } | null },
+>(items: T[]): GridSection[] {
   const out: GridSection[] = [];
   for (const it of items) {
     const title = it.group?.name ?? "Άλλα";
+    const sub = it.subgroup?.name;
     const last = out[out.length - 1];
-    if (last?.title === title) last.items.push(it);
-    else out.push({ title, items: [it] });
+    if (last?.title === title && last.sub === sub) last.items.push(it);
+    else out.push({ title, sub, items: [it] });
   }
   return out;
 }
