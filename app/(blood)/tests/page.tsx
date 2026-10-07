@@ -34,8 +34,8 @@ export default async function Tests({
   const rows = selected
     ? await prisma.bloodTest.findMany({
         where: { personId, date: new Date(selected) },
-        include: { item: { include: { group: true } } },
-        orderBy: [{ item: { groupId: "asc" } }, { itemId: "asc" }],
+        include: { item: { include: { group: true, subgroup: true } } },
+        orderBy: [{ item: { groupId: "asc" } }, { item: { subgroupId: "asc" } }, { itemId: "asc" }],
       })
     : [];
 
@@ -95,6 +95,7 @@ export default async function Tests({
                   const res = evaluate(r.value, r.item.min, r.item.max, r.item.condition);
                   return {
                     itemId: r.itemId,
+                    sub: r.item.subgroup?.name,
                     name: r.item.name,
                     value: r.value,
                     range: r.item.valueRange ?? "",

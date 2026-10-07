@@ -21,14 +21,17 @@ async function main() {
   const groupIds = new Set<number>(groups.map((g: any) => g.Group_ID));
 
   // The old import script wrote the PDF's MRN (66520) into Person_ID; that patient is Chris (id 1).
+  // Height (cm) identifies whose rows they are in the Weight table.
+  const PERSON_HEIGHT: Record<number, number> = { 1: 193, 3: 166 };
   const MRN_TO_PERSON: Record<number, number> = { 66520: 1 };
 
   for (const p of persons) {
     const mrn = Object.entries(MRN_TO_PERSON).find(([, id]) => id === p.Person_Id)?.[0] ?? null;
+    const height = PERSON_HEIGHT[p.Person_Id] ?? null;
     await prisma.person.upsert({
       where: { id: p.Person_Id },
-      update: { name: p.Person_Name, mrn },
-      create: { id: p.Person_Id, name: p.Person_Name, mrn },
+      update: { name: p.Person_Name, mrn, height },
+      create: { id: p.Person_Id, name: p.Person_Name, mrn, height },
     });
   }
 

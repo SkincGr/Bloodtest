@@ -77,7 +77,7 @@ export default function LineChart({
       <path className="line" d={path} />
       {points.map((p, i) => (
         <g key={p.date}>
-          <circle className={p.out ? "pt out" : "pt"} cx={x(i)} cy={y(p.value)} r={4}>
+          <circle className={p.out ? "pt out" : "pt"} cx={x(i)} cy={y(p.value)} r={points.length > 150 ? 1.5 : 4}>
             <title>{`${fmtDate(p.date)}: ${p.value}`}</title>
           </circle>
           {showValues && (

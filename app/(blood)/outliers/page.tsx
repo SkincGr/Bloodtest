@@ -23,7 +23,7 @@ export default async function Outliers({
   const tests = personId
     ? await prisma.bloodTest.findMany({
         where: { personId, date: dateFilter(period, from, to) },
-        include: { item: { include: { group: true } } },
+        include: { item: { include: { group: true, subgroup: true } } },
         orderBy: { date: "asc" },
       })
     : [];
@@ -91,7 +91,7 @@ export default async function Outliers({
                     <tr key={r.item.id}>
                       <td>
                         {r.item.name}
-                        <div className="muted small">{r.item.group?.name}</div>
+                        <div className="muted small">{[r.item.group?.name, r.item.subgroup?.name].filter(Boolean).join(" › ")}</div>
                       </td>
                       <td className="muted">{r.item.valueRange}</td>
                       <td className="chips">

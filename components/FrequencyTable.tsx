@@ -8,15 +8,18 @@ export type FreqRow = {
   group: string;
   count: number;
   last: string | null; // YYYY-MM-DD
+  lastValue: number | null; // value of the last measurement
+  lastOut: boolean; // last value is outside the limits
   days: number | null; // days from the last measurement to today
   rep: Repeat; // when to repeat, and why
 };
 
-type Key = "name" | "count" | "last" | "days" | "rep";
+type Key = "name" | "count" | "lastValue" | "last" | "days" | "rep";
 
 const COLS: { key: Key; label: string; center?: boolean }[] = [
   { key: "name", label: "Εξέταση" },
   { key: "count", label: "Μετρήσεις", center: true },
+  { key: "lastValue", label: "Τελ. μέτρηση", center: true },
   { key: "last", label: "Τελευταία μέτρηση", center: true },
   { key: "days", label: "Μήνες από σήμερα", center: true },
   { key: "rep", label: "Επανάληψη" },
@@ -63,6 +66,7 @@ export default function FrequencyTable({ rows }: { rows: FreqRow[] }) {
       let c = 0;
       if (key === "name") c = a.name.localeCompare(b.name, "el");
       else if (key === "count") c = a.count - b.count;
+      else if (key === "lastValue") c = (a.lastValue ?? 0) - (b.lastValue ?? 0);
       else if (key === "last") c = (a.last ?? "").localeCompare(b.last ?? "");
       else if (key === "days") c = (a.days ?? 0) - (b.days ?? 0);
       else c = compareRep(a.rep, b.rep);
@@ -101,6 +105,7 @@ export default function FrequencyTable({ rows }: { rows: FreqRow[] }) {
                 <div className="muted small">{r.group}</div>
               </td>
               <td className="c">{r.count}</td>
+              <td className={r.lastOut ? "c bad" : "c"}>{r.lastValue ?? "—"}</td>
               <td className="c">{r.last ? fmt(r.last) : "—"}</td>
               <td className="c" title={r.days != null ? `${r.days} ημέρες` : undefined}>
                 {r.days != null ? (r.days / DAYS_PER_MONTH).toFixed(1) : "—"}

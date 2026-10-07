@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export type ResultRow = {
   itemId: number;
+  sub?: string; // subgroup name
   name: string;
   value: number;
   range: string;
@@ -59,6 +60,13 @@ export default function ResultsTable({
           <input type="checkbox" checked={related} onChange={(e) => switchRelated(e.target.checked)} />
           Εμφάνιση συσχετιζόμενων
         </label>
+        <a
+          className={"btn" + (selected.size ? "" : " disabled")}
+          href={selected.size ? `/api/export?person=${personId}&items=${[...selected].join(",")}` : undefined}
+          title="Τελευταίες 3 μετρήσεις κάθε επιλεγμένης εξέτασης σε αρχείο .txt"
+        >
+          Export Data{selected.size ? ` (${selected.size})` : ""}
+        </a>
         {selected.size > 0 && (
           <button className="ghost" onClick={() => setSelected(new Set())}>Καθαρισμός</button>
         )}
@@ -84,7 +92,12 @@ export default function ResultsTable({
                 </td>
                 <td colSpan={3}>{g.name}</td>
               </tr>,
-              ...g.rows.map((r) => (
+              ...g.rows.flatMap((r, i) => [
+                r.sub && r.sub !== g.rows[i - 1]?.sub && (
+                  <tr className="subgroup" key={`s-${g.name}-${r.sub}`}>
+                    <td colSpan={4}>{r.sub}</td>
+                  </tr>
+                ),
                 <tr key={r.itemId}>
                   <td>
                     <input type="checkbox" checked={selected.has(r.itemId)} onChange={() => toggle(r.itemId)} />
@@ -95,8 +108,8 @@ export default function ResultsTable({
                     {r.out && r.pct && ` (${r.pct})`}
                   </td>
                   <td className="muted">{r.range}</td>
-                </tr>
-              )),
+                </tr>,
+              ]),
             ];
           })}
         </tbody>

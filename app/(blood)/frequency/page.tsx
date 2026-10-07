@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { repeatAdvice, INTERVAL_MONTHS } from "@/lib/repeat";
+import { evaluate } from "@/lib/range";
 import FrequencyTable, { type FreqRow } from "@/components/FrequencyTable";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function Frequency({
   const personId = Number(sp.person) || persons[0]?.id;
 
   const [items, tests] = await Promise.all([
-    prisma.bloodItem.findMany({ include: { group: true }, orderBy: [{ groupId: "asc" }, { id: "asc" }] }),
+    prisma.bloodItem.findMany({ include: { group: true, subgroup: true }, orderBy: [{ groupId: "asc" }, { subgroupId: "asc" }, { id: "asc" }] }),
     personId
       ? prisma.bloodTest.findMany({
           where: { personId },
@@ -44,9 +45,11 @@ export default async function Frequency({
     return {
       id: it.id,
       name: it.name,
-      group: it.group?.name ?? "Άλλα",
+      group: [it.group?.name ?? "Άλλα", it.subgroup?.name].filter(Boolean).join(" › "),
       count: readings.length,
       last,
+      lastValue: readings[0]?.value ?? null,
+      lastOut: readings[0] ? evaluate(readings[0].value, it.min, it.max, it.condition).out : false,
       days: last ? Math.round((todayMs - Date.parse(last)) / MS_DAY) : null,
       rep: repeatAdvice(readings, it, today),
     };
