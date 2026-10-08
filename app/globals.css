@@ -134,3 +134,8 @@ a { color:var(--accent); }
 @media (prefers-color-scheme: dark) { :root { --altcol:#222a34; } }
 .grid.wgrid thead th:first-child, .grid.wgrid tbody td:first-child { position:static; min-width:0; box-shadow:none; }
 .grid.wgrid thead th.alt, .grid.wgrid tbody td.alt { background:var(--altcol); }
+
+/* free-text health history editor */
+.historyedit { min-height:50vh; padding:12px; border:1px solid var(--line); border-radius:6px; background:var(--card); line-height:1.5; outline:none; }
+.historyedit:focus { border-color:var(--accent); }
+.historyedit ul, .historyedit ol { padding-left:24px; }

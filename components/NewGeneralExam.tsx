@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import RichTextField from "./RichTextField";
 
 type Person = { id: number; name: string };
 type Group = { id: number; name: string };
@@ -12,6 +13,7 @@ export default function NewGeneralExam({ persons, groups }: { persons: Person[];
   const [error, setError] = useState("");
   const [saved, setSaved] = useState<{ id: number; person: string } | null>(null);
   const [group, setGroup] = useState("");
+  const [formKey, setFormKey] = useState(0); // remounts the editors after a save
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,6 +27,7 @@ export default function NewGeneralExam({ persons, groups }: { persons: Person[];
       const person = form.querySelector<HTMLSelectElement>("[name=person]")!.value;
       setSaved({ id: j.id, person });
         setGroup("");
+      setFormKey((k) => k + 1);
       setOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Αποτυχία αποθήκευσης");
@@ -68,15 +71,8 @@ export default function NewGeneralExam({ persons, groups }: { persons: Person[];
               {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </label>
-          <label style={{ gridColumn: "1 / -1" }}>Κείμενο
-            <textarea name="text" rows={6} />
-          </label>
-          <label className="relchk" style={{ gridColumn: "1 / -1" }}>
-            <input type="checkbox" name="textIsHtml" /> Το κείμενο είναι HTML
-          </label>
-          <label style={{ gridColumn: "1 / -1" }}>Ανάλυση
-            <textarea name="analysis" rows={4} />
-          </label>
+          <RichTextField key={`t${formKey}`} name="text" label="Κείμενο" minHeight={160} />
+          <RichTextField key={`a${formKey}`} name="analysis" label="Ανάλυση" minHeight={110} />
           <label>Πρωτότυπο (PDF)
             <input type="file" name="prototype" accept="application/pdf,.pdf" />
           </label>

@@ -9,3 +9,4 @@ next-env.d.ts
 
 # exported medical data
 /export/
+/.next-test/

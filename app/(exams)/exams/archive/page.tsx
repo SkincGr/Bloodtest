@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import EditGeneralExam from "@/components/EditGeneralExam";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,7 @@ export default async function ExamsArchive({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const persons = await prisma.person.findMany({ orderBy: { id: "asc" } });
   const personId = Number(sp.person) || persons[0]?.id;
+  const groups = await prisma.groupGen.findMany({ orderBy: { name: "asc" } });
   const exams = await prisma.generalExam.findMany({
     where: { personId },
     orderBy: [{ date: "desc" }, { id: "desc" }],
@@ -60,18 +63,28 @@ export default async function ExamsArchive({ searchParams }: { searchParams: Pro
                   {greek(exam.date)} · {exam.title}{" "}
                   {exam.groupGen && <span className="muted small">{exam.groupGen.name}</span>}
                 </h2>
-                {exam.text &&
-                  (exam.textIsHtml ? (
-                    <div dangerouslySetInnerHTML={{ __html: exam.text }} />
-                  ) : (
-                    <p style={{ whiteSpace: "pre-wrap" }}>{exam.text}</p>
-                  ))}
+                {exam.text && <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(exam.text) }} />}
                 {exam.analysis && (
                   <>
                     <h3>Ανάλυση</h3>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{exam.analysis}</p>
+                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(exam.analysis) }} />
                   </>
                 )}
+                <EditGeneralExam
+                  exam={{
+                    id: exam.id,
+                    personId: exam.personId,
+                    date: exam.date.toISOString().slice(0, 10),
+                    title: exam.title,
+                    text: exam.text,
+                    analysis: exam.analysis,
+                    groupId: exam.GroupGen_ID,
+                    hasPdf,
+                    pdfName: exam.prototypeName,
+                  }}
+                  persons={persons.map((p) => ({ id: p.id, name: p.name }))}
+                  groups={groups.map((g) => ({ id: g.GroupGen_ID, name: g.name }))}
+                />
                 {hasPdf && (
                   <p>
                     <a className="btn" href={`/api/general-exam/${exam.id}`} target="_blank" rel="noreferrer">
