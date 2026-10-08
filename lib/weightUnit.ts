@@ -26,6 +26,25 @@ export function bucketStart(day: string, unit: string): string {
   return day;
 }
 
+// Label of a bucket in the table, e.g. "07/10/2026" (day), "2026 - 41" (week), "10/2026" (month), "Τρίμηνο 4 2026", "Έτος 2026".
+export function bucketLabel(start: string, unit: string): string {
+  const y = start.slice(0, 4);
+  const m = Number(start.slice(5, 7));
+  if (unit === "year") return y;
+  if (unit === "half") return `${m <= 6 ? "Α" : "Β"}' εξάμηνο ${y}`;
+  if (unit === "quarter") return `${Math.ceil(m / 3)}ο τρίμηνο ${y}`;
+  if (unit === "month") return `${start.slice(5, 7)}/${y}`;
+  if (unit === "week") {
+    // ISO week: year of the week's Thursday - week number, e.g. "2025 - 42"
+    const thu = new Date(`${start}T00:00:00Z`);
+    thu.setUTCDate(thu.getUTCDate() + 3);
+    const jan1 = Date.UTC(thu.getUTCFullYear(), 0, 1);
+    const week = Math.floor((thu.getTime() - jan1) / (7 * 86400000)) + 1;
+    return `${thu.getUTCFullYear()} - ${week}`;
+  }
+  return start.split("-").reverse().join("/");
+}
+
 // Average weight per bucket, sorted by date ascending. `rows` need not be sorted.
 export function aggregate(rows: { date: string; weight: number }[], unit: string) {
   const sums = new Map<string, { sum: number; n: number }>();

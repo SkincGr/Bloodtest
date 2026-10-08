@@ -1,17 +1,19 @@
 "use client";
+import { usePathname } from "next/navigation";
 import NavLinks from "./NavLinks";
+import { SECTIONS, inSection } from "./sections";
 
-const BLOOD = ["/", "/tests", "/history", "/outliers", "/frequency", "/trends"];
-
-// Top-level menu: the two sections of the app, each with its own sub menu (see the route-group layouts).
+// Top-level menu (the sections) and, under it, the sub menu of the current section.
 export default function MainNav() {
+  const path = usePathname();
+  const current = SECTIONS.find((s) => inSection(s, path));
   return (
-    <NavLinks
-      className="mainnav"
-      items={[
-        { href: "/tests", label: "Εξετάσεις Αίματος", also: BLOOD },
-        { href: "/weight", label: "Εξέλιξη Βάρους" },
-      ]}
-    />
+    <>
+      <NavLinks
+        className="mainnav"
+        items={SECTIONS.map((s) => ({ href: s.href, label: s.label, also: s.paths }))}
+      />
+      {current && current.sub.length > 0 && <NavLinks className="subnav" items={current.sub} />}
+    </>
   );
 }
