@@ -8,11 +8,13 @@ datasource db {
 }
 
 model Person {
-  id    Int         @id
-  name  String
-  mrn   String?     @unique
-  height Int? // cm; links the person to their rows in Weight
-  tests BloodTest[]
+  id           Int           @id
+  name         String
+  mrn          String?       @unique
+  height       Int? // cm; links the person to their rows in Weight
+  tests        BloodTest[]
+  generalExams GeneralExam[]
+  illnesses    Illness[]
 }
 
 model Group {
@@ -66,4 +68,71 @@ model Weight {
   height Int? // cm; tells whose weight it is (the Access table has no person column)
 
   @@index([date])
+}
+
+// Lookup table for GeneralExam.GroupGen_ID.
+model GroupGen {
+  GroupGen_ID Int           @id @default(autoincrement())
+  name        String        @unique
+  exams       GeneralExam[]
+}
+
+// A general (free-form) exam record: text and analysis, plus the original PDF.
+model GeneralExam {
+  id            Int       @id @default(autoincrement())
+  personId      Int
+  person        Person    @relation(fields: [personId], references: [id])
+  date          DateTime  @db.Date
+  title         String
+  text          String? // plain text or HTML, see textIsHtml
+  textIsHtml    Boolean   @default(false)
+  analysis      String?
+  prototype     Bytes? // the PDF itself
+  prototypeName String? // original file name of the PDF
+  GroupGen_ID   Int?
+  groupGen      GroupGen? @relation(fields: [GroupGen_ID], references: [GroupGen_ID])
+
+  @@index([personId, date])
+}
+
+// Medical history: an illness of a person, with the medication taken for it and the exam results about it.
+model Illness {
+  id          Int           @id @default(autoincrement())
+  personId    Int
+  person      Person        @relation(fields: [personId], references: [id])
+  title       String
+  description String?
+  startDate   DateTime?     @db.Date // Ημερομηνία εμφάνισης
+  endDate     DateTime?     @db.Date // Ημερομηνία περάτωσης (empty = ongoing)
+  medications Medication[]
+  exams       IllnessExam[]
+
+  @@index([personId, startDate])
+}
+
+model Medication {
+  id        Int       @id @default(autoincrement())
+  illnessId Int
+  illness   Illness   @relation(fields: [illnessId], references: [id], onDelete: Cascade)
+  title     String
+  dosage    String? // Δοσολογία
+  fromDate  DateTime? @db.Date
+  toDate    DateTime? @db.Date // empty = still taking
+  notes     String? // Παρατηρήσεις
+
+  @@index([illnessId])
+}
+
+// Measurements / exam results about an illness: free text and/or a PDF.
+model IllnessExam {
+  id            Int       @id @default(autoincrement())
+  illnessId     Int
+  illness       Illness   @relation(fields: [illnessId], references: [id], onDelete: Cascade)
+  date          DateTime? @db.Date
+  title         String
+  text          String?
+  prototype     Bytes? // the PDF itself
+  prototypeName String?
+
+  @@index([illnessId])
 }

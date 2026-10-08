@@ -128,3 +128,9 @@ a { color:var(--accent); }
 @media (prefers-color-scheme: dark) { .loginpage .login { background:rgba(24,30,38,.9); } }
 .login { max-width:320px; margin:12vh auto; }
 .login input { width:100%; margin-bottom:10px; }
+
+/* weight table: equal columns, every second date/kg pair light grey (1st, 3rd, 5th), the others white */
+:root { --altcol:#eceff3; }
+@media (prefers-color-scheme: dark) { :root { --altcol:#222a34; } }
+.grid.wgrid thead th:first-child, .grid.wgrid tbody td:first-child { position:static; min-width:0; box-shadow:none; }
+.grid.wgrid thead th.alt, .grid.wgrid tbody td.alt { background:var(--altcol); }

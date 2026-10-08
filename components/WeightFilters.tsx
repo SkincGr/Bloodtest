@@ -11,6 +11,7 @@ export default function WeightFilters({
   from,
   to,
   unit,
+  view,
 }: {
   persons: { name: string; height: number }[];
   height?: number;
@@ -18,11 +19,12 @@ export default function WeightFilters({
   from: string;
   to: string;
   unit: string;
+  view: string;
 }) {
   const router = useRouter();
-  const go = (p: { height?: number; period?: string; from?: string; to?: string; unit?: string }) => {
+  const go = (p: { height?: number; period?: string; from?: string; to?: string; unit?: string; view?: string }) => {
     const per = p.period ?? period;
-    const q = new URLSearchParams({ height: String(p.height ?? height), period: per, unit: p.unit ?? unit });
+    const q = new URLSearchParams({ height: String(p.height ?? height), period: per, unit: p.unit ?? unit, view: p.view ?? view });
     if (per === "custom") {
       const f = p.from ?? from;
       const t = p.to ?? to;
@@ -33,7 +35,20 @@ export default function WeightFilters({
   };
 
   return (
-    <div className="row" style={{ margin: 0 }}>
+    <>
+      <h1>
+        Βάρος{" "}
+        <span role="radiogroup" aria-label="Μορφή" style={{ fontSize: 15, fontWeight: 400 }}>
+          (
+          {[["table", "Σε πίνακα"], ["chart", "Σε γράφημα"]].map(([k, label], n) => (
+            <label key={k} style={{ marginLeft: n ? 12 : 0 }}>
+              <input type="radio" name="view" checked={view === k} onChange={() => go({ view: k })} /> {label}
+            </label>
+          ))}
+          )
+        </span>
+      </h1>
+      <div className="row" style={{ margin: 0 }}>
       <label className="muted">
         Πρόσωπο{" "}
         <select value={height} onChange={(e) => go({ height: Number(e.target.value) })}>
@@ -68,6 +83,7 @@ export default function WeightFilters({
           ))}
         </select>
       </label>
-    </div>
+      </div>
+    </>
   );
 }
