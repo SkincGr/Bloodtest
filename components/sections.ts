@@ -14,13 +14,13 @@ export const SECTIONS: Section[] = [
   {
     href: "/tests",
     label: "Εξετάσεις Αίματος",
-    paths: ["/tests", "/", "/history", "/outliers", "/frequency", "/trends"],
+    paths: ["/tests", "/", "/import", "/history", "/outliers", "/frequency", "/trends"],
     sub: [
       { href: "/tests", label: "Αρχείο" },
       { href: "/history", label: "Πίνακας" },
       { href: "/outliers", label: "Εκτός ορίων" },
       { href: "/frequency", label: "Συχνότητα" },
-      { href: "/", label: "Εισαγωγή" },
+      { href: "/import", label: "Export/Import" },
     ],
   },
   {

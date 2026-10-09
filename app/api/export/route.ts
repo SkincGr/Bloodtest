@@ -1,15 +1,20 @@
 import { prisma } from "@/lib/db";
+import { dateFilter, readPeriod } from "@/lib/period";
 
-const LAST = 3; // measurements kept per exam
 const fmt = (d: Date) => d.toISOString().slice(0, 10).split("-").reverse().join("/");
 
-// GET /api/export?person=&items=1,2,3 -> .txt with the last 3 measurements of each selected exam
-// (the ones ticked on the Αρχείο page; ticking a group ticks all its exams).
+// GET /api/export?person=&items=1,2,3&period=&from=&to= -> .txt with the measurements of each selected exam
+// in the chosen period (same periods as the other pages; default: all measurements).
 // Line format: ΗΜΕΡΟΜΗΝΙΑ - ΠΕΡΙΓΡΑΦΗ - ΣΥΜΒΟΛΟ - ΤΙΜΗ
 export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams;
   const personId = Number(sp.get("person"));
   const itemIds = (sp.get("items") ?? "").split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0);
+  const { period, from, to } = readPeriod({
+    period: sp.get("period") ?? undefined,
+    from: sp.get("from") ?? undefined,
+    to: sp.get("to") ?? undefined,
+  });
   const person = await prisma.person.findUnique({ where: { id: personId } });
   if (!person || !itemIds.length) return new Response("Άγνωστο πρόσωπο ή καμία εξέταση", { status: 400 });
 
@@ -17,7 +22,7 @@ export async function GET(req: Request) {
     where: { id: { in: itemIds } },
     orderBy: [{ groupId: "asc" }, { subgroupId: "asc" }, { id: "asc" }],
     include: {
-      tests: { where: { personId }, orderBy: { date: "desc" }, take: LAST },
+      tests: { where: { personId, date: dateFilter(period, from, to) }, orderBy: { date: "desc" } },
     },
   });
 

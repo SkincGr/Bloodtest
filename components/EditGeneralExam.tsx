@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RichTextField from "./RichTextField";
 
 export type EditableExam = {
@@ -15,18 +15,21 @@ export type EditableExam = {
   pdfName: string | null;
 };
 
-// ✏️ button that opens the edit form of a GeneralExam record (same fields as the create form).
+// Full-screen edit form of a GeneralExam record (same fields as the create form). Opened by ExamActions.
 export default function EditGeneralExam({
   exam,
   persons,
   groups,
+  open,
+  onClose,
 }: {
+  open: boolean;
+  onClose: () => void;
   exam: EditableExam;
   persons: { id: number; name: string }[];
   groups: { id: number; name: string }[];
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -40,7 +43,7 @@ export default function EditGeneralExam({
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error ?? "Αποτυχία αποθήκευσης");
       const person = form.querySelector<HTMLSelectElement>("[name=person]")!.value;
-      setOpen(false);
+      onClose();
       if (Number(person) !== exam.personId) router.push(`/exams/archive?person=${person}&id=${exam.id}`);
       else router.refresh();
     } catch (err) {
@@ -50,14 +53,28 @@ export default function EditGeneralExam({
     }
   };
 
+  // Esc closes; the page behind does not scroll while the card is open
+  useEffect(() => {
+    if (!open) return;
+    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", key);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", key);
+      document.body.style.overflow = prev;
+    };
+  }, [open, onClose]);
+
   return (
     <>
-      <button type="button" className="ghost" onClick={() => setOpen(!open)} aria-expanded={open}
-        title="Επεξεργασία" aria-label="Επεξεργασία">
-        ✏️ Επεξεργασία
-      </button>
       {open && (
-        <form className="card addform" onSubmit={submit} style={{ marginTop: 8 }}>
+        <div className="fullcard" role="dialog" aria-modal="true" aria-label="Επεξεργασία">
+          <div className="fullcard-head">
+            <h2 style={{ margin: 0 }}>Επεξεργασία · {exam.title}</h2>
+            <button type="button" className="ghost" onClick={onClose}>✕ Κλείσιμο</button>
+          </div>
+        <form className="card addform" onSubmit={submit} style={{ margin: 0 }}>
           <label>Πρόσωπο
             <select name="person" required defaultValue={exam.personId}>
               {persons.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -87,10 +104,11 @@ export default function EditGeneralExam({
           )}
           <div className="row">
             <button type="submit" disabled={busy}>{busy ? "Αποθήκευση…" : "Αποθήκευση"}</button>
-            <button type="button" className="ghost" onClick={() => setOpen(false)}>Άκυρο</button>
+            <button type="button" className="ghost" onClick={onClose}>Άκυρο</button>
             {error && <span className="bad">{error}</span>}
           </div>
         </form>
+        </div>
       )}
     </>
   );

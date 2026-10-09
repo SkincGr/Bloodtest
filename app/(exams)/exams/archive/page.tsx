@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import EditGeneralExam from "@/components/EditGeneralExam";
+import ExamActions from "@/components/ExamActions";
 import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 export const dynamic = "force-dynamic";
@@ -64,13 +64,8 @@ export default async function ExamsArchive({ searchParams }: { searchParams: Pro
                   {exam.groupGen && <span className="muted small">{exam.groupGen.name}</span>}
                 </h2>
                 {exam.text && <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(exam.text) }} />}
-                {exam.analysis && (
-                  <>
-                    <h3>Ανάλυση</h3>
-                    <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(exam.analysis) }} />
-                  </>
-                )}
-                <EditGeneralExam
+                <ExamActions
+                  key={exam.id}
                   exam={{
                     id: exam.id,
                     personId: exam.personId,
@@ -82,16 +77,10 @@ export default async function ExamsArchive({ searchParams }: { searchParams: Pro
                     hasPdf,
                     pdfName: exam.prototypeName,
                   }}
+                  analysisHtml={exam.analysis ? sanitizeHtml(exam.analysis) : ""}
                   persons={persons.map((p) => ({ id: p.id, name: p.name }))}
                   groups={groups.map((g) => ({ id: g.GroupGen_ID, name: g.name }))}
                 />
-                {hasPdf && (
-                  <p>
-                    <a className="btn" href={`/api/general-exam/${exam.id}`} target="_blank" rel="noreferrer">
-                      Άνοιγμα PDF{exam.prototypeName ? ` (${exam.prototypeName})` : ""}
-                    </a>
-                  </p>
-                )}
               </>
             )}
           </section>

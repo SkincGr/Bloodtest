@@ -57,6 +57,7 @@ export default function Uploader({
 
   async function onFiles(files: FileList | null) {
     if (!files?.length) return;
+    const run = ++batch.current; // a newer run (or a cancel) makes the older one stop
     urls.current.forEach(URL.revokeObjectURL);
     urls.current = [];
     const out: Entry[] = [];
@@ -82,15 +83,30 @@ export default function Uploader({
         out.push({ file: f.name, blob: f, size: f.size, url, error: String(e), personId: "", date: "", values: [] });
       }
     }
+    if (batch.current !== run) return; // cancelled while the files were being read
     setEntries(out);
     setCur(0);
     setConfirming(false);
-    const run = ++batch.current;
     out.forEach((e, i) => e.missing?.length && readShapes(run, i, e.blob, e.missing));
   }
 
   // Reads the values drawn as shapes with OCR, one file at a time, filling the inputs as results arrive.
   const batch = useRef(0);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  // Ακύρωση: drops the loaded PDFs and everything read from them; nothing is saved to the database.
+  function cancel() {
+    batch.current++; // stops the OCR and any file still being read
+    urls.current.forEach(URL.revokeObjectURL);
+    urls.current = [];
+    if (fileInput.current) fileInput.current.value = "";
+    setEntries([]);
+    setCur(0);
+    setConfirming(false);
+    setExisting(null);
+    setAdding(null);
+    setActive(undefined);
+  }
   async function readShapes(run: number, index: number, file: File, rows: MissRow[]) {
     const upd = (id: number, p: Partial<MissRow>) =>
       setEntries((es) =>
@@ -267,7 +283,7 @@ export default function Uploader({
   return (
     <>
       <div className="card">
-        <input type="file" accept=".pdf,application/pdf" multiple
+        <input ref={fileInput} type="file" accept=".pdf,application/pdf" multiple
           onChange={(ev) => onFiles(ev.target.files)} />
         <p className="muted">Τα PDF διαβάζονται στον browser σου· στη βάση στέλνονται μόνο οι τιμές.</p>
       </div>
@@ -425,6 +441,10 @@ export default function Uploader({
                         Εισαγωγή στη βάση
                       </button>
                       {!isLast && <button className="ghost" onClick={() => goto(cur + 1)}>Παράλειψη</button>}
+                      <button className="ghost" disabled={e.saving} onClick={cancel}
+                        title="Κλείνει τα PDF χωρίς να αποθηκεύσει τίποτα στη βάση">
+                        Ακύρωση
+                      </button>
                       {e.saving && <span className="muted">Αποθήκευση…</span>}
                     </div>
                   )}

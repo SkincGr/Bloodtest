@@ -18,6 +18,7 @@ export default function HistoryEditor({ personId, initialHtml }: { personId: num
   const initial = useRef({ __html: initialHtml });
   const [state, setState] = useState<"saved" | "dirty" | "saving" | "error">("saved");
   const [error, setError] = useState("");
+  const [size, setSize] = useState(initialHtml.length); // characters of HTML, the server accepts up to 1.500.000
 
   const exec = (cmd: string, arg?: string) => {
     box.current?.focus();
@@ -35,6 +36,7 @@ export default function HistoryEditor({ personId, initialHtml }: { personId: num
         body: JSON.stringify({ person: personId, html: box.current?.innerHTML ?? "" }),
       });
       const j = await res.json().catch(() => ({}));
+      if (res.status === 413) throw new Error("Το κείμενο είναι πολύ μεγάλο για αποστολή (πάνω από ~4 MB)");
       if (!res.ok) throw new Error(j.error ?? "Αποτυχία αποθήκευσης");
       if (box.current && typeof j.html === "string") box.current.innerHTML = j.html; // show what was actually saved
       setState("saved");
@@ -60,6 +62,7 @@ export default function HistoryEditor({ personId, initialHtml }: { personId: num
         <span className={state === "error" ? "bad" : "muted"}>
           {state === "saved" ? "Αποθηκευμένο" : state === "dirty" ? "Μη αποθηκευμένες αλλαγές" : state === "error" ? error : ""}
         </span>
+        <span className="muted small" title="Μέγιστο όριο: 1.500.000 χαρακτήρες">{size.toLocaleString("el-GR")} χαρ.</span>
       </div>
       <div
         ref={box}
@@ -69,7 +72,10 @@ export default function HistoryEditor({ personId, initialHtml }: { personId: num
         role="textbox"
         aria-multiline="true"
         aria-label="Ιστορικό υγείας"
-        onInput={() => setState("dirty")}
+        onInput={() => {
+          setState("dirty");
+          setSize(box.current?.innerHTML.length ?? 0);
+        }}
         dangerouslySetInnerHTML={initial.current}
       />
     </div>

@@ -60,13 +60,6 @@ export default function ResultsTable({
           <input type="checkbox" checked={related} onChange={(e) => switchRelated(e.target.checked)} />
           Εμφάνιση συσχετιζόμενων
         </label>
-        <a
-          className={"btn" + (selected.size ? "" : " disabled")}
-          href={selected.size ? `/api/export?person=${personId}&items=${[...selected].join(",")}` : undefined}
-          title="Τελευταίες 3 μετρήσεις κάθε επιλεγμένης εξέτασης σε αρχείο .txt"
-        >
-          Export Data{selected.size ? ` (${selected.size})` : ""}
-        </a>
         {selected.size > 0 && (
           <button className="ghost" onClick={() => setSelected(new Set())}>Καθαρισμός</button>
         )}
