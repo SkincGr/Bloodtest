@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// Default page: redirect to blood exams archive
+// Default page: the app opens on Ιστορικό
 export default function DefaultPage() {
-  redirect("/tests");
+  redirect("/illnesses");
 }

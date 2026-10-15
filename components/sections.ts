@@ -14,7 +14,7 @@ export const SECTIONS: Section[] = [
   {
     href: "/tests",
     label: "Εξετάσεις Αίματος",
-    paths: ["/tests", "/", "/import", "/history", "/outliers", "/frequency", "/trends"],
+    paths: ["/tests", "/import", "/history", "/outliers", "/frequency", "/trends"],
     sub: [
       { href: "/tests", label: "Αρχείο" },
       { href: "/history", label: "Πίνακας" },

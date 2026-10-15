@@ -14,6 +14,7 @@
     "db:weights": "tsx prisma/import-weights.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.134.0",
     "@prisma/client": "^6.0.0",
     "next": "^15.0.0",
     "pdfjs-dist": "^4.10.38",

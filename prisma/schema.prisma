@@ -15,6 +15,7 @@ model Person {
   tests        BloodTest[]
   generalExams GeneralExam[]
   history      PersonHistory?
+  healthReports HealthReport[]
 }
 
 model Group {
@@ -100,4 +101,17 @@ model PersonHistory {
   person    Person   @relation(fields: [personId], references: [id])
   html      String
   updatedAt DateTime @updatedAt
+}
+
+// AI-written health report (Health Analysis) of a person, made from the Ιστορικό text and the latest blood results.
+model HealthReport {
+  id        Int      @id @default(autoincrement())
+  personId  Int
+  person    Person   @relation(fields: [personId], references: [id])
+  seq       Int // α/α: running number per person
+  createdAt DateTime @default(now())
+  html      String // sanitized HTML
+  model     String?
+
+  @@unique([personId, seq])
 }
