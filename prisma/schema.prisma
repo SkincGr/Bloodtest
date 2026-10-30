@@ -56,6 +56,10 @@ model BloodTest {
   item     BloodItem @relation(fields: [itemId], references: [id])
   date     DateTime  @db.Date
   value    Float
+  origValue Float? // value as printed by the lab, when it was converted to the stored unit
+  convNote  String? // the conversion, e.g. "µg/dL → nmol/L"
+  unit      String? // unit the lab printed for this result, e.g. "µg/dL" (null for values imported before this was kept)
+  refRange  String? // reference limits the lab printed for this result, e.g. "4.87-11.72"
 
   @@unique([personId, itemId, date])
   @@index([personId, date])

@@ -10,6 +10,7 @@ export type FreqRow = {
   last: string | null; // YYYY-MM-DD
   lastValue: number | null; // value of the last measurement
   lastOut: boolean; // last value is outside the limits
+  lastConv?: string; // tooltip when the last value was converted from another unit
   days: number | null; // days from the last measurement to today
   rep: Repeat; // when to repeat, and why
 };
@@ -105,7 +106,10 @@ export default function FrequencyTable({ rows }: { rows: FreqRow[] }) {
                 <div className="muted small">{r.group}</div>
               </td>
               <td className="c">{r.count}</td>
-              <td className={r.lastOut ? "c bad" : "c"}>{r.lastValue ?? "—"}</td>
+              <td className={r.lastOut ? "c bad" : "c"} title={r.lastConv}>
+                {r.lastValue ?? "—"}
+                {r.lastConv && <sup className="conv" aria-label={r.lastConv}>↻</sup>}
+              </td>
               <td className="c">{r.last ? fmt(r.last) : "—"}</td>
               <td className="c" title={r.days != null ? `${r.days} ημέρες` : undefined}>
                 {r.days != null ? (r.days / DAYS_PER_MONTH).toFixed(1) : "—"}

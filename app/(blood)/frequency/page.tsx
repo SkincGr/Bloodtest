@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { repeatAdvice, INTERVAL_MONTHS } from "@/lib/repeat";
 import { evaluate } from "@/lib/range";
+import { convTitle } from "@/lib/units";
 import FrequencyTable, { type FreqRow } from "@/components/FrequencyTable";
 
 export const dynamic = "force-dynamic";
@@ -22,16 +23,16 @@ export default async function Frequency({
       ? prisma.bloodTest.findMany({
           where: { personId },
           orderBy: { date: "desc" },
-          select: { itemId: true, date: true, value: true },
+          select: { itemId: true, date: true, value: true, origValue: true, convNote: true },
         })
       : Promise.resolve([]),
   ]);
 
   // Readings per exam, newest first.
-  const byItem = new Map<number, { date: string; value: number }[]>();
+  const byItem = new Map<number, { date: string; value: number; conv?: string }[]>();
   for (const t of tests) {
     const list = byItem.get(t.itemId) ?? [];
-    list.push({ date: t.date.toISOString().slice(0, 10), value: t.value });
+    list.push({ date: t.date.toISOString().slice(0, 10), value: t.value, conv: convTitle(t.origValue, t.convNote, t.value) });
     byItem.set(t.itemId, list);
   }
 
@@ -49,6 +50,7 @@ export default async function Frequency({
       count: readings.length,
       last,
       lastValue: readings[0]?.value ?? null,
+      lastConv: readings[0]?.conv,
       lastOut: readings[0] ? evaluate(readings[0].value, it.min, it.max, it.condition).out : false,
       days: last ? Math.round((todayMs - Date.parse(last)) / MS_DAY) : null,
       rep: repeatAdvice(readings, it, today),

@@ -12,7 +12,7 @@ export default async function History({
   const persons = await prisma.person.findMany({ orderBy: { id: "asc" } });
   const personId = Number(sp.person) || persons[0]?.id;
   const tests = personId
-    ? await prisma.bloodTest.findMany({ where: { personId }, select: { itemId: true, date: true, value: true } })
+    ? await prisma.bloodTest.findMany({ where: { personId }, select: { itemId: true, date: true, value: true, origValue: true, convNote: true } })
     : [];
   const itemIds = new Set(tests.map((t) => t.itemId));
   const items = (

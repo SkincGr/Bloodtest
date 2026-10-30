@@ -23,7 +23,7 @@ type Entry = {
   error?: string;
   personId: number | "";
   date: string;
-  values: { itemId: number; name: string; value: number; on: boolean; boxes?: Box[] }[];
+  values: { itemId: number; name: string; value: number; unit?: string; range?: string; on: boolean; boxes?: Box[] }[];
   status?: { ok: boolean; text: string };
   size: number; // bytes, used to be sure we delete the very same file
   del?: { state: "asking" | "busy" | "done" | "kept"; text?: string }; // "delete the PDF from your computer?" step
@@ -132,7 +132,7 @@ export default function Uploader({
     const v = Number(m.input.replace(",", "."));
     if (!m.input.trim() || !isFinite(v) || !e) return;
     patch(cur, {
-      values: [...e.values, { itemId: m.itemId, name: m.name, value: v, on: true, boxes: m.boxes }],
+      values: [...e.values, { itemId: m.itemId, name: m.name, value: v, range: m.range, on: true, boxes: m.boxes }],
       missing: e.missing?.filter((x) => x.itemId !== m.itemId),
     });
     setActive({ id: "v" + m.itemId, n: (active?.n ?? 0) + 1 });
@@ -198,7 +198,7 @@ export default function Uploader({
           personId: e.personId,
           mrn: e.parsed?.mrn,
           date: e.date,
-          values: e.values.filter((v) => v.on).map((v) => ({ itemId: v.itemId, value: v.value })),
+          values: e.values.filter((v) => v.on).map((v) => ({ itemId: v.itemId, value: v.value, unit: v.unit, range: v.range })),
         }),
       });
       const j = await r.json();
@@ -206,7 +206,22 @@ export default function Uploader({
         saving: false,
         del: r.ok ? { state: canDelete ? "asking" : "kept", text: canDelete ? undefined : "Σβήσε το αρχείο χειροκίνητα (ο browser σου δεν επιτρέπει διαγραφή)." } : undefined,
         status: r.ok
-          ? { ok: true, text: `Αποθηκεύτηκαν ${j.inserted} τιμές` + (j.deleted ? ` (διαγράφηκαν ${j.deleted} παλιές)` : "") }
+          ? {
+              ok: true,
+              text:
+                `Αποθηκεύτηκαν ${j.inserted} τιμές` +
+                (j.deleted ? ` (διαγράφηκαν ${j.deleted} παλιές)` : "") +
+                (j.converted?.length
+                  ? ` · Μετατροπή μονάδας: ${j.converted
+                      .map((c: { name: string; from: number; to: number; label: string }) => `${c.name} ${c.from} → ${c.to} (${c.label})`)
+                      .join(", ")}`
+                  : "") +
+                (j.suspect?.length
+                  ? ` · ΠΡΟΣΟΧΗ, πιθανή άλλη μονάδα (δεν μετατράπηκε): ${j.suspect
+                      .map((x: { name: string; unit: string | null; why: string }) => `${x.name}${x.unit ? " (" + x.unit + ")" : ""}: ${x.why}`)
+                      .join("; ")}`
+                  : ""),
+            }
           : { ok: false, text: `Σφάλμα: ${j.error}` },
       });
     } catch {
@@ -332,7 +347,7 @@ export default function Uploader({
                   ) : (
                     <div className="tablewrap">
                       <table>
-                        <thead><tr><th></th><th>Εξέταση</th><th className="num">Τιμή</th></tr></thead>
+                        <thead><tr><th></th><th>Εξέταση</th><th className="num">Τιμή</th><th>Μονάδα</th><th>Όρια PDF</th></tr></thead>
                         <tbody>
                           {e.values.map((v, k) => (
                             <tr key={v.itemId} data-row={"v" + v.itemId}
@@ -343,6 +358,8 @@ export default function Uploader({
                               <td>{v.name}</td>
                               <td className="num" onClick={(ev) => ev.stopPropagation()}><input type="number" step="any" value={v.value}
                                 onChange={(ev) => setValue(cur, k, { value: Number(ev.target.value) })} /></td>
+                              <td className="muted">{v.unit ?? "—"}</td>
+                              <td className="muted">{v.range ?? "—"}</td>
                             </tr>
                           ))}
                         </tbody>

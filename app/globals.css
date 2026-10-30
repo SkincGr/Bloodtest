@@ -152,3 +152,6 @@ a { color:var(--accent); }
 .dates a.yr { display:block; padding:6px 10px; margin:0 0 4px; color:var(--grptext); text-decoration:none; }
 .dates a.yr:hover { background:var(--grp); filter:brightness(.94); }
 .dates a.yr.active { background:var(--accent); color:#fff; }
+
+/* marker next to a value that was converted from another unit (see lib/units.ts) */
+sup.conv { margin-left:3px; color:var(--accent); font-weight:700; cursor:help; }

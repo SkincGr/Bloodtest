@@ -60,7 +60,7 @@ export default async function Trends({
     ? await prisma.bloodTest.findMany({
         where: { personId, itemId: { in: [...items.map((i) => i.id), ...relatedIds] }, date: dateFilter(period, from, to) },
         orderBy: { date: "asc" },
-        select: { itemId: true, date: true, value: true },
+        select: { itemId: true, date: true, value: true, origValue: true, convNote: true },
       })
     : [];
   const hasData = new Set(tests.map((t) => t.itemId));

@@ -10,6 +10,7 @@ export type ResultRow = {
   range: string;
   out: boolean;
   pct: string; // formatted, e.g. "+50%"; empty when in range
+  conv?: string; // tooltip when the value was converted from another unit
 };
 export type ResultGroup = { name: string; rows: ResultRow[] };
 
@@ -99,6 +100,7 @@ export default function ResultsTable({
                   <td className={"num" + (r.out ? " bad" : "")}>
                     {r.value}
                     {r.out && r.pct && ` (${r.pct})`}
+                    {r.conv && <sup className="conv" title={r.conv} aria-label={r.conv}>↻</sup>}
                   </td>
                   <td className="muted">{r.range}</td>
                 </tr>,

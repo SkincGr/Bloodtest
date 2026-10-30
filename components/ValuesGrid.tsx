@@ -1,4 +1,5 @@
 import { evaluate, formatPct } from "@/lib/range";
+import { convTitle } from "@/lib/units";
 
 // Exams x dates table (newest date first) with a fixed header row and first column.
 // Out-of-range values are bold red; hovering one shows its limits and deviation.
@@ -11,7 +12,7 @@ export type GridItem = {
   max: number | null;
   condition: string | null;
 };
-export type GridTest = { itemId: number; date: Date; value: number };
+export type GridTest = { itemId: number; date: Date; value: number; origValue?: number | null; convNote?: string | null };
 export type GridSection = { title: string; sub?: string; items: GridItem[] };
 
 const day = (d: Date) => d.toISOString().slice(0, 10);
@@ -21,6 +22,7 @@ export default function ValuesGrid({ sections, tests }: { sections: GridSection[
   const own = tests.filter((t) => ids.has(t.itemId));
   const dates = [...new Set(own.map((t) => day(t.date)))].sort().reverse();
   const cell = new Map(own.map((t) => [`${t.itemId}|${day(t.date)}`, t.value]));
+  const conv = new Map(own.map((t) => [`${t.itemId}|${day(t.date)}`, convTitle(t.origValue ?? null, t.convNote ?? null, t.value)]));
 
   if (!sections.some((s) => s.items.length) || !dates.length)
     return (
@@ -61,9 +63,11 @@ export default function ValuesGrid({ sections, tests }: { sections: GridSection[
                   const v = cell.get(`${it.id}|${d}`);
                   const r = v != null ? evaluate(v, it.min, it.max, it.condition) : null;
                   const bad = !!r?.out;
+                  const cv = conv.get(`${it.id}|${d}`);
                   return (
-                    <td key={d} className={"num" + (bad ? " out" : "")}>
+                    <td key={d} className={"num" + (bad ? " out" : "")} title={cv}>
                       {v ?? ""}
+                      {cv && <sup className="conv" aria-label={cv}>↻</sup>}
                       {bad && (
                         <span className="lim">
                           {it.valueRange && <>όρια {it.valueRange}</>}

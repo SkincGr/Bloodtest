@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { evaluate, formatPct } from "@/lib/range";
 import ResultsTable from "@/components/ResultsTable";
+import { convTitle } from "@/lib/units";
 
 export const dynamic = "force-dynamic";
 
@@ -101,6 +102,7 @@ export default async function Tests({
                     range: r.item.valueRange ?? "",
                     out: res.out,
                     pct: formatPct(res.pct),
+                    conv: convTitle(r.origValue, r.convNote, r.value),
                   };
                 }),
               }))}

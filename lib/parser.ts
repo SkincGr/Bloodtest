@@ -20,7 +20,8 @@ export function decodeText(text: string): string {
 export type ItemRef = { id: number; name: string; code?: string | null };
 // Rectangle on a PDF page, in PDF units (y = bottom edge); page is 0-based.
 export type Box = { page: number; x: number; y: number; w: number; h: number };
-export type ParsedValue = { itemId: number; name: string; value: number; boxes?: Box[] };
+// `unit` and `range` are what the lab printed next to the result (e.g. "µg/dL", "4.87-11.72"); absent when not found.
+export type ParsedValue = { itemId: number; name: string; value: number; unit?: string; range?: string; boxes?: Box[] };
 export type PdfPage = { width: number; items: { s: string; x: number; y: number; w?: number; h?: number }[] };
 export type Unmatched = { label: string; value: number; range?: string; boxes?: Box[] };
 // A row for a known exam that has reference limits but no value in the text layer: the lab drew the value as a
@@ -127,8 +128,30 @@ const tidy = (s: string) =>
 // A printed reference range: "0.12-0.35", "<0.5", ">3".
 const RANGE = /^(?:[<>]=?\s*\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?\s*-\s*\d+(?:[.,]\d+)?)$/;
 
+// A piece of a unit: latin letters, µ, %, "/" and the like ("mg/dL", "K/", "μ", "g/dL"). Greek words are comments.
+const UNIT = /^[A-Za-zµμ%/.^*\d-]{1,12}$/;
+
 type Cell = { s: string; x: number; y: number; w: number; h: number };
 type Row = Cell[];
+
+// The unit and the reference limits the lab printed to the right of a result cell. The unit is often split over
+// several cells ("μ" + "g/dL"), so the short cells up to the limits are joined. "μ" (Greek) and "µ" (micro sign)
+// are written the same way.
+function printedBeside(row: Row, cell: Cell): { unit?: string; range?: string } {
+  const own = cell.s.match(/^\d+(?:[.,]\d+)?\s*(.*)$/)?.[1].trim();
+  const parts = own ? [own] : [];
+  let range: string | undefined;
+  for (const c of row.slice(row.indexOf(cell) + 1)) {
+    if (RANGE.test(c.s)) {
+      range = c.s.replace(/\s+/g, "");
+      break;
+    }
+    if (NUM.test(c.s) || !UNIT.test(c.s)) break; // the next result of the row, or free text ("Οριακό")
+    parts.push(c.s);
+  }
+  const unit = parts.join("").replace(/\s+/g, "").replace(/μ/g, "µ");
+  return { unit: unit || undefined, range };
+}
 
 function groupRows(items: PdfPage["items"]): Row[] {
   const sorted = items
@@ -187,13 +210,13 @@ export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, 
     let pending: Pending | null = null; // a label row without a value (the value is on the next row)
     let held: Held | null = null; // a value whose label had no code; the "(CODE)" line may follow it
 
-    const assign = (hit: Alias[], v: Cell[], extra: (Box | null)[]) => {
+    const assign = (hit: Alias[], v: Cell[], row: Row, extra: (Box | null)[]) => {
       for (const a of hit) {
         const c = v[a.index ?? 0];
         if (!c || done.has(a.item)) continue;
         done.add(a.item);
         const boxes = [...extra, boxOf(pageIdx, [c])].filter((b): b is Box => !!b);
-        values.push({ itemId: a.item, name: nameOf.get(a.item)!, value: parseFloat(c.s.replace(",", ".")), boxes });
+        values.push({ itemId: a.item, name: nameOf.get(a.item)!, value: parseFloat(c.s.replace(",", ".")), ...printedBeside(row, c), boxes });
       }
     };
     const addUnmatched = (label: string, v: Cell[], row: Row, extra: (Box | null)[]) => {
@@ -243,7 +266,7 @@ export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, 
           // The lab prints some codes under the value: label / value / "(PSA)".
           const code = held.pend.y - y < 45 ? resolve(label) : [];
           if (code.length) {
-            assign(code, held.v, [held.pend.box, boxOf(pageIdx, labelCells)]);
+            assign(code, held.v, held.row, [held.pend.box, boxOf(pageIdx, labelCells)]);
             held = null;
             pending = null;
             continue;
@@ -268,13 +291,13 @@ export function parsePages(pages: PdfPage[], items: ItemRef[]): Pick<ParsedPdf, 
       if (valueOnly) {
         const p = pending!;
         pending = null;
-        if (p.hit.length) assign(p.hit, v, [p.box]);
+        if (p.hit.length) assign(p.hit, v, cells, [p.box]);
         else held = { pend: p, v, row: cells };
         continue;
       }
       pending = null;
       const hit = resolve(label);
-      if (hit.length) assign(hit, v, [boxOf(pageIdx, labelCells)]);
+      if (hit.length) assign(hit, v, cells, [boxOf(pageIdx, labelCells)]);
       else addUnmatched(label, v, cells, [boxOf(pageIdx, labelCells)]);
     }
     flushHeld();
